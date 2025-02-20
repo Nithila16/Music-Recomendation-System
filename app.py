@@ -1,19 +1,15 @@
-
 from flask import Flask, render_template, request
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
-# flask app
+#app
 app = Flask(__name__)
 
-# Load your dataset
-df = pd.read_csv('clustered_df.csv')
 
-numerical_features = [
-    "valence", "danceability", "energy", "tempo",
-    "acousticness", "liveness", "speechiness", "instrumentalness"
-]
+#load save data
+df = pd.read_csv("clustered_df.csv")
+
 
 def recommend_songs(song_name, df, num_recommendations=5):
     # Get the cluster of the input song
@@ -26,21 +22,34 @@ def recommend_songs(song_name, df, num_recommendations=5):
     recommendations = same_cluster_songs.iloc[similar_songs][["name", "year", "artists"]]
     return recommendations
 
-# route
-@app.route("/")
+#route
+@app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route("/recommend", methods=["GET", "POST"])
+#API END POINT
+@app.route("/recommend",methods=['GET','POST'])
 def recommend():
     recommendations = []
+    
     if request.method == "POST":
         song_name = request.form.get("song_name")
+
+
         try:
-            recommendations = recommend_songs(song_name, df).to_dict(orient="records")
+            # Assuming recommend_songs takes a string and returns a DataFrame
+            recommendations_df = recommend_songs(song_name_df)
+            if recommendations_df is None or recommendations_df.empty:
+                raise ValueError("No recommendations found")
+            recommendations = recommendations_df.to_dict(orient="records")
+
         except Exception as e:
-            recommendations = [{"name": "Error", "artists": "Invalid song name", "year": ""}]
+            print(f"Error: {e}")  # Logging the error for debugging
+           
+    
     return render_template("index.html", recommendations=recommendations)
 
-if __name__ == "__main__":
+
+#python app call
+if __name__ == '__main__':
     app.run(debug=True)
